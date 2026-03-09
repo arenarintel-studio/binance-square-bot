@@ -157,5 +157,5 @@ def run_bot():
     with open(POSTED_FILE, "a") as f:
         f.write(article["title"] + "\n")
 
-if name == "__main__":
+if __name == "__main__":
     run_bot()
