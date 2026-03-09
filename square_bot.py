@@ -23,9 +23,7 @@ RSS_FEEDS = [
     "https://news.bitcoin.com/feed"
 ]
 
-# === ARENAR INTEL NEWS STYLE ===
 def rephrase_news(title, description):
-
     templates = [
         "🚨 JUST IN: {title}\n\n{summary}",
         "⚠️ MARKET ALERT: {title}\n\n{summary}",
@@ -36,46 +34,31 @@ def rephrase_news(title, description):
 
     summary = description[:220] + "..." if len(description) > 220 else description
     template = random.choice(templates)
+    ref_link = f"https://www.binance.com/en/join?ref={BINANCE_REF_CODE}"
 
-   post = template.format(
-    title=title,
-    summary=summary
-)
-
-full_post = post
+    post = template.format(title=title, summary=summary)
+    full_post = f"{post}\n\nTrade crypto on Binance: {ref_link}"
 
     return full_post[:1800]
 
-# === DUPLICATE CHECK ===
 def already_posted(title):
-    try:
-        with open(POSTED_FILE, "r") as f:
-            posted = f.read().splitlines()
-            return title in posted
-    except:
+    if not os.path.exists(POSTED_FILE):
         return False
+    with open(POSTED_FILE, "r", encoding="utf-8") as f:
+        posted = f.read().splitlines()
+        return title in posted
 
-# === SIGNATURE CREATION ===
 def create_signature(query_string, secret):
     return hmac.new(
-        secret.encode(),
-        query_string.encode(),
+        secret.encode("utf-8"),
+        query_string.encode("utf-8"),
         hashlib.sha256
     ).hexdigest()
 
-# === POST TO BINANCE SQUARE ===
 def post_to_square(content):
-
     base_url = "https://www.binance.com/bapi/square/v1/public/square/post/create"
-
-    payload = {
-        "content": content,
-        "contentType": "text",
-        "language": "en"
-    }
-
+    
     timestamp = int(time.time() * 1000)
-
     query_string = f"timestamp={timestamp}"
     signature = create_signature(query_string, SECRET_KEY)
 
@@ -84,76 +67,69 @@ def post_to_square(content):
         "Content-Type": "application/json"
     }
 
+    payload = {
+        "content": content,
+        "contentType": "text",
+        "language": "en"
+    }
+
     url = f"{base_url}?{query_string}&signature={signature}"
+    
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        return response.json()
+    except Exception as e:
+        return {"error": str(e)}
 
-    response = requests.post(url, headers=headers, json=payload)
-
-    return response.json()
-
-# === FETCH NEWS ===
 def fetch_rss_news(feed_url):
-
     feed = feedparser.parse(feed_url)
-
     articles = []
-
     for entry in feed.entries[:5]:
-
         articles.append({
-            "title": entry.get("title",""),
-            "summary": entry.get("summary",""),
-            "link": entry.get("link","")
+            "title": entry.get("title", ""),
+            "summary": entry.get("summary", ""),
+            "link": entry.get("link", "")
         })
-
     return articles
 
 def get_all_news():
-
     all_articles = []
-
     for feed in RSS_FEEDS:
-
         try:
             articles = fetch_rss_news(feed)
             all_articles.extend(articles)
-            time.sleep(1)
-        except:
-            pass
-
+            time.sleep(0.5)
+        except Exception:
+            continue
     return all_articles
 
-# === MAIN BOT ===
 def run_bot():
-
-    print(f"[{datetime.now()}] Fetching news")
-
+    print(f"[{datetime.now()}] Fetching news...")
     articles = get_all_news()
 
     if not articles:
-        print("No news found")
+        print("No news found.")
         return
 
-    article = None
-
+    new_article = None
     for a in articles:
         if not already_posted(a["title"]):
-            article = a
+            new_article = a
             break
 
-    if article is None:
-        print("No new articles")
+    if not new_article:
+        print("No new articles to post.")
         return
 
-    post_content = rephrase_news(article["title"], article["summary"])
-
-    print("Posting article...")
+    post_content = rephrase_news(new_article["title"], new_article["summary"])
+    print(f"Posting: {new_article['title']}")
 
     result = post_to_square(post_content)
+    print(f"Response: {result}")
 
-    print(result)
+    # Log the title only if the post was successful or attempted
+    with open(POSTED_FILE, "a", encoding="utf-8") as f:
+        f.write(new_article["title"] + "\n")
 
-    with open(POSTED_FILE, "a") as f:
-        f.write(article["title"] + "\n")
-
-if __name == "__main__":
+if name == "__main__":
     run_bot()
