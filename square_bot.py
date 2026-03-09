@@ -37,14 +37,12 @@ def rephrase_news(title, description):
     summary = description[:220] + "..." if len(description) > 220 else description
     template = random.choice(templates)
 
-    ref_link = f"https://www.binance.com/en/join?ref={BINANCE_REF_CODE}"
+   post = template.format(
+    title=title,
+    summary=summary
+)
 
-    post = template.format(
-        title=title,
-        summary=summary
-    )
-
-    full_post = f"{post}\n\nTrade crypto on Binance: {ref_link}"
+full_post = post
 
     return full_post[:1800]
 
