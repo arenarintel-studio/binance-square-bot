@@ -12,7 +12,6 @@ from email.utils import parsedate_to_datetime
 # === SECURE API KEYS ===
 API_KEY = os.getenv("BINANCE_API_KEY")
 SECRET_KEY = os.getenv("BINANCE_SECRET_KEY")
-BINANCE_REF_CODE = os.getenv("BINANCE_REF_CODE")
 POSTED_FILE = "posted_articles.txt"
 MAX_AGE_DAYS = 14  # Only post articles from the last 2 weeks
 
@@ -212,8 +211,7 @@ def rephrase_news(title, summary, source_type="rss"):
         ]
 
     opener = random.choice(openers)
-    ref_link = f"https://www.binance.com/en/join?ref={BINANCE_REF_CODE}"
-    post = f"{opener}\n\n{title}\n\n{summary}\n\nTrade on Binance 👉 {ref_link}"
+    post = f"{opener}\n\n{title}\n\n{summary}"
     return post[:1800]
 
 def fetch_rss_articles():
