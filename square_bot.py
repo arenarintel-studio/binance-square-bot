@@ -11,7 +11,6 @@ from datetime import datetime
 API_KEY = os.getenv("BINANCE_API_KEY")
 SECRET_KEY = os.getenv("BINANCE_SECRET_KEY")
 BINANCE_REF_CODE = os.getenv("BINANCE_REF_CODE")
-
 POSTED_FILE = "posted_articles.txt"
 
 # === CRYPTO NEWS SOURCES ===
@@ -31,11 +30,9 @@ def rephrase_news(title, description):
         "⚡️ DEVELOPING: {title}\n\n{summary}",
         "📊 CRYPTO UPDATE: {title}\n\n{summary}"
     ]
-
     summary = description[:220] + "..." if len(description) > 220 else description
     template = random.choice(templates)
     ref_link = f"https://www.binance.com/en/join?ref={BINANCE_REF_CODE}"
-
     post = template.format(title=title, summary=summary)
     full_post = f"{post}\n\nTrade crypto on Binance: {ref_link}"
     return full_post[:1800]
@@ -48,10 +45,11 @@ def already_posted(title):
         return title in posted
 
 def create_signature(query_string, secret):
+    # FIX: was hmac.new(...) — correct function is hmac.new with keyword digestmod
     return hmac.new(
         secret.encode("utf-8"),
         query_string.encode("utf-8"),
-        hashlib.sha256
+        digestmod=hashlib.sha256
     ).hexdigest()
 
 def post_to_square(content):
@@ -59,20 +57,17 @@ def post_to_square(content):
     timestamp = int(time.time() * 1000)
     query_string = f"timestamp={timestamp}"
     signature = create_signature(query_string, SECRET_KEY)
-
     headers = {
         "X-MBX-APIKEY": API_KEY,
         "Content-Type": "application/json"
     }
-
     payload = {
         "content": content,
         "contentType": "text",
         "language": "en"
     }
-
     url = f"{base_url}?{query_string}&signature={signature}"
-    
+
     try:
         response = requests.post(url, headers=headers, json=payload)
         return response.json()
@@ -104,7 +99,6 @@ def get_all_news():
 def run_bot():
     print(f"[{datetime.now()}] Fetching news...")
     articles = get_all_news()
-
     if not articles:
         print("No news found.")
         return
@@ -121,13 +115,13 @@ def run_bot():
 
     post_content = rephrase_news(new_article["title"], new_article["summary"])
     print(f"Attempting to post: {new_article['title']}")
-
     result = post_to_square(post_content)
     print(f"Response: {result}")
 
-    # Log to file only if title is found
+    # Log posted title to file
     with open(POSTED_FILE, "a", encoding="utf-8") as f:
         f.write(new_article["title"] + "\n")
 
-if name == "__main__":
+# FIX: was `if name == "__main__":` — missing double underscores around name and __main__
+if __name__ == "__main__":
     run_bot()
