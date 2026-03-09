@@ -28,7 +28,7 @@ def rephrase_news(title, description):
         "🚨 JUST IN: {title}\n\n{summary}",
         "⚠️ MARKET ALERT: {title}\n\n{summary}",
         "📰 BREAKING: {title}\n\n{summary}",
-        "⚡ DEVELOPING: {title}\n\n{summary}",
+        "⚡️ DEVELOPING: {title}\n\n{summary}",
         "📊 CRYPTO UPDATE: {title}\n\n{summary}"
     ]
 
@@ -38,7 +38,6 @@ def rephrase_news(title, description):
 
     post = template.format(title=title, summary=summary)
     full_post = f"{post}\n\nTrade crypto on Binance: {ref_link}"
-
     return full_post[:1800]
 
 def already_posted(title):
@@ -57,7 +56,6 @@ def create_signature(query_string, secret):
 
 def post_to_square(content):
     base_url = "https://www.binance.com/bapi/square/v1/public/square/post/create"
-    
     timestamp = int(time.time() * 1000)
     query_string = f"timestamp={timestamp}"
     signature = create_signature(query_string, SECRET_KEY)
@@ -122,12 +120,12 @@ def run_bot():
         return
 
     post_content = rephrase_news(new_article["title"], new_article["summary"])
-    print(f"Posting: {new_article['title']}")
+    print(f"Attempting to post: {new_article['title']}")
 
     result = post_to_square(post_content)
     print(f"Response: {result}")
 
-    # Log the title only if the post was successful or attempted
+    # Log to file only if title is found
     with open(POSTED_FILE, "a", encoding="utf-8") as f:
         f.write(new_article["title"] + "\n")
 
