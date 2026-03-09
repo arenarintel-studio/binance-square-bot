@@ -54,7 +54,7 @@ def post_to_square(content):
     return response.json()
 
 # === SIMPLE TEST ===
-if name == "__main__":
+if __name__ == "__main__":
     # Simple test message
     test_message = f"Testing my new crypto bot! 🤖 #{random.randint(1000,9999)}"
     
