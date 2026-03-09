@@ -146,7 +146,7 @@ def run_bot():
         print(f"❌ Failed: {result['error']}")
     else:
         print(f"✅ Posted successfully!")
-print(f"Original: {article['title']}")
+        print(f"Original: {article['title']}")
         print(f"Source: {article['link']}")
     
     with open("post_log.txt", "a") as f:
